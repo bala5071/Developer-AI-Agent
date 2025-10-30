@@ -14,7 +14,7 @@ GITHUB_USERNAME = os.getenv("GITHUB_USERNAME", "")
 
 # Project Paths
 BASE_DIR = Path(__file__).parent
-OUTPUT_DIR = BASE_DIR / "output" / "projects"
+OUTPUT_DIR = BASE_DIR / "output"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Agent Configuration

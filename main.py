@@ -2,7 +2,6 @@
 Developer AI Agent System - Main Entry Point
 Complete project automation: Plan -> Code -> Test -> Deploy to GitHub
 """
-import os
 import re
 from pathlib import Path
 from datetime import datetime
@@ -21,7 +20,7 @@ from tasks.tester_tasks import create_testing_task
 from tasks.github_tasks import create_github_task
 
 # Import config
-from config import OUTPUT_DIR, MAX_ITERATIONS
+from config import OUTPUT_DIR, GITHUB_USERNAME
 
 
 def sanitize_repo_name(name: str) -> str:
@@ -36,9 +35,8 @@ def sanitize_repo_name(name: str) -> str:
 
 def create_project_directory(project_name: str) -> Path:
     """Create and return project directory path"""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_name = sanitize_repo_name(project_name)
-    project_dir = OUTPUT_DIR / f"{safe_name}_{timestamp}"
+    project_dir = OUTPUT_DIR / f"{safe_name}"
     project_dir.mkdir(parents=True, exist_ok=True)
     return project_dir
 
@@ -68,6 +66,8 @@ def main():
     
     if not project_name:
         project_name = "ai-generated-project"
+
+    github_username = GITHUB_USERNAME
     
     # Sanitize repository name
     repo_name = sanitize_repo_name(project_name)
@@ -113,6 +113,7 @@ def main():
         github_task = create_github_task(
             github_manager,
             str(project_dir),
+            github_username,
             repo_name,
             project_description,
             context_tasks=[planning_task, development_task, testing_task]
