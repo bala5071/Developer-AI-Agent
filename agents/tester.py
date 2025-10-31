@@ -14,7 +14,7 @@ def create_tester_agent():
         development, automated testing, and quality assurance. You write comprehensive 
         test suites, identify edge cases, and ensure code reliability. You use pytest, 
         unit testing, integration testing, and follow testing best practices.""",
-        llm="ollama/llama3",
+        llm="ollama/codellama:13b-instruct",
         verbose=AGENT_VERBOSE,
         tools=[
             run_tests,

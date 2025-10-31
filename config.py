@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Ollama Configuration
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "codellama:13b-instruct")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
 # GitHub Configuration

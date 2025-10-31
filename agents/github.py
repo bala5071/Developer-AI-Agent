@@ -16,7 +16,7 @@ def create_github_agent():
         GitHub repository management. You handle version control, create repositories, 
         manage commits, and ensure proper project documentation. You follow Git best 
         practices and maintain clean commit histories.""",
-        llm="ollama/llama3",
+        llm="ollama/codellama:13b-instruct",
         verbose=AGENT_VERBOSE,
         tools=[
             create_github_repo,

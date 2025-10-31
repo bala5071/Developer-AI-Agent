@@ -12,7 +12,7 @@ def create_developer_agent():
         programming languages and frameworks. You write production-ready code following 
         best practices, SOLID principles, and industry standards. You create modular, 
         maintainable code with proper error handling and documentation.""",
-    llm="ollama/llama3",
+    llm="ollama/codellama:13b-instruct",
     verbose=AGENT_VERBOSE,
     tools=[
         write_file,

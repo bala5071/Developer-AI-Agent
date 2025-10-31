@@ -10,7 +10,7 @@ def create_manager_agent():
         You excel at breaking down complex problems into manageable components,
         selecting appropriate technologies, and designing scalable solutions.
         You consider best practices, security, performance, and maintainability.""",
-    llm="ollama/llama3",
+    llm="ollama/codellama:13b-instruct",
     verbose=AGENT_VERBOSE,
     allow_delegation=False,
     max_iter=15
