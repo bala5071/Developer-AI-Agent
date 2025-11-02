@@ -77,10 +77,6 @@ def main():
     project_dir = create_project_directory(project_name)
     print(f"✓ Project directory: {project_dir}")
     
-    # Optional: GitHub deployment
-    deploy_to_github = input("\nDeploy to GitHub? (yes/no) [yes]: ").strip().lower()
-    deploy_to_github = deploy_to_github in ['yes', 'y', '']
-    
     print("\n" + "=" * 80)
     print("🚀 STARTING PROJECT GENERATION")
     print("=" * 80)
@@ -90,7 +86,7 @@ def main():
     manager = create_manager_agent()
     developer = create_developer_agent()
     tester = create_tester_agent()
-    github_manager = create_github_agent() if deploy_to_github else None
+    github_manager = create_github_agent()
     
     # Create tasks
     print("📋 Creating task pipeline...")
@@ -105,12 +101,8 @@ def main():
         str(project_dir),
         context_tasks=[planning_task, development_task]
     )
-    
-    tasks = [planning_task, development_task, testing_task]
-    agents = [manager, developer, tester]
-    
-    if deploy_to_github:
-        github_task = create_github_task(
+
+    github_task = create_github_task(
             github_manager,
             str(project_dir),
             github_username,
@@ -118,10 +110,11 @@ def main():
             project_description,
             context_tasks=[planning_task, development_task, testing_task]
         )
-        tasks.append(github_task)
-        agents.append(github_manager)
     
-    # Create and run crew
+    tasks = [planning_task, development_task, testing_task, github_task]
+    agents = [manager, developer, tester, github_manager]
+    
+
     print("\n🎯 Assembling crew...")
     crew = Crew(
         agents=agents,
@@ -158,10 +151,9 @@ def main():
         print("\n" + "=" * 80)
         print("🎉 SUCCESS! Your project is ready!")
         print("=" * 80)
-        
-        if deploy_to_github:
-            print(f"\n🔗 Check your GitHub repository: https://github.com/YOUR_USERNAME/{repo_name}")
-        
+
+        print(f"\n🔗 Check your GitHub repository: https://github.com/{github_username}/{repo_name}")
+
     except Exception as e:
         print(f"\n❌ Error during execution: {str(e)}")
         print(f"\n📁 Partial project may be available at: {project_dir}")
