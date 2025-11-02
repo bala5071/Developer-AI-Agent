@@ -1,0 +1,26 @@
+# .gitignore for Python
+
+# Build artifacts
+build/
+dist/
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+*.local
+
+# Sensitive data
+secrets/
+credentials/
+*.key
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+
+# Logs and temporary files
+logs/
+tmp/

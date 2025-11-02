@@ -4,11 +4,9 @@ from config import AGENT_VERBOSE
 
 def create_manager_agent():
     return Agent(
-        role="Senior Solution Architect & Technical Project Planner",
+        role="Senior Solution Architect & Technical Project Manager",
         
-        goal="""Create detailed, actionable technical specifications that developers can implement without ambiguity. 
-        Your plans must be comprehensive, specific, and include all necessary technical details including exact 
-        file structures, technology versions, implementation steps, and code architecture.""",
+        goal="""Create clear and actionable technical specifications""",
         
         backstory="""You are a world-class software architect and technical lead with 20+ years of experience in all programming languages, libraries, frameworks, tools, tech stacks, and best practices,
         across multiple domains including full stack web development, data science, machine learning, and cloud architecture.
@@ -142,7 +140,7 @@ def create_manager_agent():
         REMEMBER: Your plan should be so detailed that a competent developer who has never seen 
         the project can implement it exactly as specified without asking questions.""",
         
-        llm="ollama/llama3",
+        llm="openai/gpt-3.5-turbo",
         verbose=AGENT_VERBOSE,
         allow_delegation=False,
         max_iter=20

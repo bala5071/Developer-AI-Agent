@@ -198,7 +198,7 @@ def create_github_agent():
         - Skip documentation
 
         REMEMBER: You create the public face of the project. Professional documentation makes all the difference.""",
-        llm="ollama/codellama:13b-instruct",
+        llm="openai/gpt-3.5-turbo",
         verbose=AGENT_VERBOSE,
         tools=[
             create_github_repo,
