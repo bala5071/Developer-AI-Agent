@@ -1,11 +1,11 @@
-"""Development Tasks"""
 from crewai import Task
 
-dev_description = """Based on the technical plan, implement the complete project with production-ready code:
+
+def create_development_task(agent, project_dir: str, project_type: str, context_tasks: list = None):
+    dev_description =f"""Based on the technical plan, implement the complete project with production-ready code:
 
                     PROJECT DIRECTORY: {project_dir}
-                    PROJECT TYPE: {project_type}  # e.g., web_app, mobile_app, cli_tool, library, api_service, desktop_app
-                    TECHNOLOGY STACK: {tech_stack}  # e.g., Python/Flask, JavaScript/React, Java/Spring, Go, Rust, etc.
+                    PROJECT TYPE: {project_type}
 
                     ═══════════════════════════════════════════════════════════════════════════════
                     YOUR IMPLEMENTATION RESPONSIBILITIES:
@@ -13,7 +13,7 @@ dev_description = """Based on the technical plan, implement the complete project
 
                     📁 PHASE 1: PROJECT STRUCTURE
                     ───────────────────────────────────────────────────────────────────────────────
-                    1. Create the complete directory structure appropriate for {tech_stack}:
+                    1. Create the complete directory structure appropriate for the {project_type}:
                     - Follow language/framework conventions (src/, lib/, components/, etc.)
                     - Set up test directories (test/, tests/, __tests__)
                     - Create config/settings directories
@@ -324,7 +324,6 @@ dev_description = """Based on the technical plan, implement the complete project
                     BEGIN IMPLEMENTATION NOW - CREATE PRODUCTION-READY CODE!
                     ═══════════════════════════════════════════════════════════════════════════════
                     """
-def create_development_task(agent, project_dir: str, context_tasks: list = None):
     return Task(
         description=dev_description,
         agent=agent,

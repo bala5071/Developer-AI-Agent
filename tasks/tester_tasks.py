@@ -1,13 +1,12 @@
-"""Testing Tasks"""
 from crewai import Task
 
 
-def create_testing_task(agent, project_dir: str, context_tasks: list = None):
+def create_testing_task(agent, project_dir: str, project_type: str, context_tasks: list = None):
     return Task(
          description=f"""Test, validate, and quality-assure the implemented project:
 
          PROJECT DIRECTORY: {project_dir}
-
+         PROJECT TYPE: {project_type}
          ══════════════════════════════════════════════════════════════════
          YOUR QUALITY ASSURANCE RESPONSIBILITIES:
          ═══════════════════════════════════════════════════════════════════════════════

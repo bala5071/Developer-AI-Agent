@@ -1,10 +1,5 @@
-"""
-Developer AI Agent System - Main Entry Point
-Complete project automation: Plan -> Code -> Test -> Deploy to GitHub
-"""
 import re
 from pathlib import Path
-from datetime import datetime
 from crewai import Crew, Process
 
 # Import agents
@@ -41,15 +36,80 @@ def create_project_directory(project_name: str) -> Path:
     return project_dir
 
 
+def display_plan(plan: str) -> None:
+    """Display the technical plan in a formatted way"""
+    print("\n" + "=" * 80)
+    print("📋 TECHNICAL PLAN")
+    print("=" * 80)
+    print(plan)
+    print("=" * 80)
+
+
+def get_user_approval() -> tuple[bool, str]:
+    """
+    Get user approval for the plan.
+    
+    Returns:
+        tuple: (approved: bool, feedback: str)
+    """
+    print("\n" + "=" * 80)
+    print("👤 HUMAN REVIEW REQUIRED")
+    print("=" * 80)
+    print("\nPlease review the technical plan above.")
+    print("\nOptions:")
+    print("  1. Approve - Proceed with implementation")
+    print("  2. Request Changes - Provide additional requirements")
+    print("  3. Cancel - Exit the system")
+    
+    while True:
+        choice = input("\nYour choice (1/2/3): ").strip()
+        
+        if choice == "1":
+            print("\n✓ Plan approved! Proceeding with implementation...")
+            return True, ""
+        
+        elif choice == "2":
+            print("\n📝 Please provide your additional requirements or changes:")
+            print("(You can provide multiple lines. Press Enter twice to finish)\n")
+            
+            feedback_lines = []
+            empty_count = 0
+            
+            while empty_count < 2:
+                line = input()
+                if line.strip():
+                    feedback_lines.append(line)
+                    empty_count = 0
+                else:
+                    empty_count += 1
+            
+            feedback = "\n".join(feedback_lines).strip()
+            
+            if feedback:
+                print(f"\n✓ Feedback received ({len(feedback)} characters)")
+                return False, feedback
+            else:
+                print("\n⚠ No feedback provided. Please try again.")
+                continue
+        
+        elif choice == "3":
+            print("\n❌ Project generation cancelled by user.")
+            return False, "CANCELLED"
+        
+        else:
+            print("\n⚠ Invalid choice. Please enter 1, 2, or 3.")
+
+
 def main():
     print("=" * 80)
     print("🤖 DEVELOPER AI AGENT SYSTEM")
     print("=" * 80)
     print("\nThis system will:")
     print("1. 📋 Analyze your project requirements and create a technical plan")
-    print("2. 💻 Write complete, working code")
-    print("3. 🧪 Test and validate the code")
-    print("4. 🚀 Deploy to GitHub repository")
+    print("2. 👤 Get your approval (you can request changes)")
+    print("3. 💻 Write complete, working code")
+    print("4. 🧪 Test and validate the code")
+    print("5. 🚀 Deploy to GitHub repository")
     print("\n" + "=" * 80)
     
     # Get user input
@@ -88,21 +148,155 @@ def main():
     tester = create_tester_agent()
     github_manager = create_github_agent()
     
-    # Create tasks
-    print("📋 Creating task pipeline...")
-    planning_task = create_planning_task(manager, project_description, project_type)
-    development_task = create_development_task(
-        developer, 
-        str(project_dir),
-        context_tasks=[planning_task]
-    )
-    testing_task = create_testing_task(
-        tester,
-        str(project_dir),
-        context_tasks=[planning_task, development_task]
-    )
+    # PHASE 1: PLANNING WITH HUMAN APPROVAL LOOP
+    print("\n" + "=" * 80)
+    print("📋 PHASE 1: TECHNICAL PLANNING")
+    print("=" * 80)
+    
+    plan_approved = False
+    iteration_count = 0
+    max_iterations = 5
+    current_description = project_description
+    
+    while not plan_approved and iteration_count < max_iterations:
+        iteration_count += 1
+        print(f"\n🔄 Planning iteration {iteration_count}/{max_iterations}...")
+        
+        # Create planning task
+        planning_task = create_planning_task(
+            manager, 
+            current_description, 
+            project_type
+        )
+        
+        # Execute planning only
+        planning_crew = Crew(
+            agents=[manager],
+            tasks=[planning_task],
+            process=Process.sequential,
+            verbose=True
+        )
+        
+        try:
+            # Get the plan
+            plan_result = planning_crew.kickoff()
+            
+            # Display the plan
+            display_plan(str(plan_result))
+            
+            # Save plan to file for reference
+            plan_file = project_dir / "TECHNICAL_PLAN.md"
+            plan_file.write_text(str(plan_result), encoding='utf-8')
+            print(f"\n💾 Plan saved to: {plan_file}")
+            
+            # Get user approval
+            approved, feedback = get_user_approval()
+            
+            if feedback == "CANCELLED":
+                print("\n👋 Goodbye!")
+                return
+            
+            if approved:
+                plan_approved = True
+                print("\n✅ Plan approved! Moving to implementation phase...")
+                break
+            else:
+                # User requested changes
+                print("\n🔄 Incorporating your feedback into the plan...")
+                current_description = f"""{current_description}
 
-    github_task = create_github_task(
+ADDITIONAL REQUIREMENTS FROM USER (Iteration {iteration_count}):
+{feedback}
+
+Please update the technical plan to incorporate these new requirements."""
+                
+                print("\n📝 Updated requirements received. Regenerating plan...")
+        
+        except Exception as e:
+            print(f"\n❌ Error during planning: {str(e)}")
+            retry = input("\nWould you like to retry? (y/n): ").strip().lower()
+            if retry != 'y':
+                return
+            continue
+    
+    if not plan_approved:
+        print(f"\n⚠ Maximum planning iterations ({max_iterations}) reached.")
+        print("Please refine your requirements and try again.")
+        return
+    
+    # PHASE 2: IMPLEMENTATION
+    print("\n" + "=" * 80)
+    print("💻 PHASE 2: CODE IMPLEMENTATION")
+    print("=" * 80)
+    
+    try:
+        development_task = create_development_task(
+            developer, 
+            str(project_dir),
+            str(project_type),
+            context_tasks=[planning_task]
+        )
+        
+        development_crew = Crew(
+            agents=[developer],
+            tasks=[development_task],
+            process=Process.sequential,
+            verbose=True
+        )
+        
+        print("\n🔨 Writing code... This may take several minutes...")
+        dev_result = development_crew.kickoff()
+        print("\n✅ Code implementation complete!")
+        
+    except Exception as e:
+        print(f"\n❌ Error during development: {str(e)}")
+        print(f"📁 Partial project available at: {project_dir}")
+        import traceback
+        traceback.print_exc()
+        return
+    
+    # PHASE 3: TESTING
+    print("\n" + "=" * 80)
+    print("🧪 PHASE 3: TESTING & QUALITY ASSURANCE")
+    print("=" * 80)
+    
+    try:
+        testing_task = create_testing_task(
+            tester,
+            str(project_dir),
+            str(project_type),
+            context_tasks=[planning_task, development_task]
+        )
+        
+        testing_crew = Crew(
+            agents=[tester],
+            tasks=[testing_task],
+            process=Process.sequential,
+            verbose=True
+        )
+        
+        print("\n🔍 Running tests and quality checks...")
+        test_result = testing_crew.kickoff()
+        print("\n✅ Testing complete!")
+        
+        # Display test report if exists
+        test_report = project_dir / "TEST_REPORT.md"
+        if test_report.exists():
+            print(f"\n📊 Test report saved to: {test_report}")
+        
+    except Exception as e:
+        print(f"\n❌ Error during testing: {str(e)}")
+        print("⚠ Continuing to deployment despite test errors...")
+        import traceback
+        traceback.print_exc()
+    
+    # PHASE 4: GITHUB DEPLOYMENT
+    print("\n" + "=" * 80)
+    print("🚀 PHASE 4: GITHUB DEPLOYMENT")
+    print("=" * 80)
+    
+    try:
+        github_task = create_github_task(
             github_manager,
             str(project_dir),
             github_username,
@@ -110,55 +304,57 @@ def main():
             project_description,
             context_tasks=[planning_task, development_task, testing_task]
         )
-    
-    tasks = [planning_task, development_task, testing_task, github_task]
-    agents = [manager, developer, tester, github_manager]
-    
-
-    print("\n🎯 Assembling crew...")
-    crew = Crew(
-        agents=agents,
-        tasks=tasks,
-        process=Process.sequential,
-        verbose=True,
-        max_rpm=10
-    )
-    
-    print("\n" + "=" * 80)
-    print("⚡ EXECUTING PROJECT WORKFLOW")
-    print("=" * 80)
-    print("\nThis may take several minutes depending on project complexity...")
-    print("The agents are working on your project...\n")
-    
-    try:
-        # Execute the crew
-        result = crew.kickoff()
         
-        print("\n" + "=" * 80)
-        print("✅ PROJECT GENERATION COMPLETE!")
-        print("=" * 80)
+        github_crew = Crew(
+            agents=[github_manager],
+            tasks=[github_task],
+            process=Process.sequential,
+            verbose=True
+        )
         
-        print(f"\n📁 Project Location: {project_dir}")
-        print(f"\n📄 Files Generated:")
-        for file in project_dir.rglob("*"):
-            if file.is_file():
-                print(f"  - {file.relative_to(project_dir)}")
+        print("\n📤 Deploying to GitHub...")
+        github_result = github_crew.kickoff()
+        print("\n✅ GitHub deployment complete!")
         
-        print(f"\n📊 Final Report:")
-        print("-" * 80)
-        print(result)
-        
-        print("\n" + "=" * 80)
-        print("🎉 SUCCESS! Your project is ready!")
-        print("=" * 80)
-
-        print(f"\n🔗 Check your GitHub repository: https://github.com/{github_username}/{repo_name}")
-
     except Exception as e:
-        print(f"\n❌ Error during execution: {str(e)}")
-        print(f"\n📁 Partial project may be available at: {project_dir}")
+        print(f"\n❌ Error during GitHub deployment: {str(e)}")
+        print(f"📁 Project available locally at: {project_dir}")
         import traceback
         traceback.print_exc()
+    
+    # FINAL SUMMARY
+    print("\n" + "=" * 80)
+    print("✅ PROJECT GENERATION COMPLETE!")
+    print("=" * 80)
+    
+    print(f"\n📁 Project Location: {project_dir}")
+    print(f"\n📄 Files Generated:")
+    file_count = 0
+    for file in sorted(project_dir.rglob("*")):
+        if file.is_file():
+            file_count += 1
+            print(f"  {file_count}. {file.relative_to(project_dir)}")
+    
+    print(f"\n📊 Project Summary:")
+    print(f"  - Total Files: {file_count}")
+    print(f"  - Planning Iterations: {iteration_count}")
+    print(f"  - Project Type: {project_type}")
+    print(f"  - Repository Name: {repo_name}")
+    
+    print("\n" + "=" * 80)
+    print("🎉 SUCCESS! Your project is ready!")
+    print("=" * 80)
+    
+    print(f"\n🔗 GitHub Repository: https://github.com/{github_username}/{repo_name}")
+    print(f"📁 Local Project: {project_dir}")
+    
+    print("\n📚 Next Steps:")
+    print("  1. Review the code in your project directory")
+    print("  2. Check the TEST_REPORT.md for quality metrics")
+    print("  3. Visit your GitHub repository")
+    print("  4. Clone and start using your project!")
+    
+    print("\n👋 Thank you for using Developer AI Agent System!")
 
 
 if __name__ == "__main__":

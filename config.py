@@ -20,8 +20,8 @@ GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
 GITHUB_USERNAME = os.getenv("GITHUB_USERNAME", "")
 
 # Project Paths
-BASE_DIR = Path(__file__).parent
-OUTPUT_DIR = BASE_DIR / "output"
+BASE_DIR = Path(r"C:\Users\balas\Documents\Projects")
+OUTPUT_DIR = BASE_DIR
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Agent Configuration
@@ -37,5 +37,5 @@ PROJECT_EXTENSIONS = {
 }
 
 # Testing Configuration
-TEST_TIMEOUT = 300  # seconds
+TEST_TIMEOUT = 300
 RUN_TESTS = True
