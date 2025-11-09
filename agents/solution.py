@@ -4,7 +4,7 @@ from config import AGENT_VERBOSE
 
 def create_manager_agent():
     return Agent(
-        role="Senior Solution Architect & Technical Project Manager",
+        role="Senior Solution Architect",
         
         goal="""Create clear and actionable technical specifications""",
         
