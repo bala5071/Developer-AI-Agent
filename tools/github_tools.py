@@ -392,7 +392,7 @@ temp/
 def create_github_repo(repo_name: str, description: str = "", private: bool = False,
                        has_issues: bool = True, has_wiki: bool = False,
                        has_projects: bool = False, auto_init: bool = False,
-                       gitignore_template: str = None, license_template: str = None) -> str:
+                       license_template: str = None) -> str:
     """
     Creates a new GitHub repository with comprehensive options.
     
@@ -427,7 +427,6 @@ def create_github_repo(repo_name: str, description: str = "", private: bool = Fa
             has_wiki=has_wiki,
             has_projects=has_projects,
             auto_init=auto_init,
-            gitignore_template=gitignore_template,
             license_template=license_template
         )
         
@@ -450,7 +449,7 @@ def create_github_repo(repo_name: str, description: str = "", private: bool = Fa
 
 @tool("Initialize Git repository")
 def init_git(directory: str, initial_branch: str = "main",
-             create_gitignore: bool = True, project_type: str = None) -> str:
+             create_gitignore: bool = False, project_type: str = None) -> str:
     """
     Initializes a Git repository with best practices.
     
@@ -469,8 +468,25 @@ def init_git(directory: str, initial_branch: str = "main",
         if not path.exists():
             return f"✗ Error: Directory does not exist: {directory}"
         
+        # Check if already a git repository
+        try:
+            existing_repo = Repo(directory)
+            return f"⚠ Directory is already a Git repository\n" \
+                   f"Current branch: {existing_repo.active_branch.name}"
+        except:
+            pass  # Not a repo, continue with initialization
+        
         # Initialize repository
-        repo = Repo.init(directory, initial_branch=initial_branch)
+        repo = Repo.init(directory)
+        
+        # Set initial branch name (for newer git versions)
+        try:
+            # Try to rename master to main if needed
+            if repo.active_branch.name != initial_branch:
+                repo.git.branch('-M', initial_branch)
+        except:
+            # For older git versions or if branch already exists
+            pass
         
         output = "✓ Git repository initialized\n"
         output += "═" * 70 + "\n"
@@ -501,6 +517,8 @@ def init_git(directory: str, initial_branch: str = "main",
         
         return output
         
+    except GitCommandError as e:
+        return f"✗ Git Command Error: {str(e)}"
     except Exception as e:
         return f"✗ Error initializing Git repository: {str(e)}"
 
@@ -521,30 +539,80 @@ def commit_changes(directory: str, message: str, add_all: bool = True,
         Success message with commit details or error message
     """
     try:
-        repo = Repo(directory)
+        path = Path(directory)
+        
+        # Check if directory exists
+        if not path.exists():
+            return f"✗ Error: Directory does not exist: {directory}"
+        
+        # Check if it's a git repository
+        try:
+            repo = Repo(directory)
+        except:
+            return f"✗ Error: Not a Git repository. Initialize with 'git init' first.\n" \
+                   f"Directory: {directory}"
         
         if repo.bare:
             return "✗ Error: Repository is bare (no working directory)"
         
+        # Validate commit message
+        if not message or not message.strip():
+            return "✗ Error: Commit message cannot be empty"
+        
+        # Check for git user configuration
+        try:
+            user_name = repo.config_reader().get_value('user', 'name')
+            user_email = repo.config_reader().get_value('user', 'email')
+        except:
+            return "✗ Error: Git user not configured.\n" \
+                   "Configure with:\n" \
+                   "  git config user.name 'Your Name'\n" \
+                   "  git config user.email 'your.email@example.com'\n" \
+                   "Or set globally with --global flag"
+        
         # Check if there are changes
-        if not repo.is_dirty(untracked_files=True):
+        is_dirty = repo.is_dirty(untracked_files=True)
+        has_untracked = len(repo.untracked_files) > 0
+        
+        if not is_dirty and not has_untracked:
             return "⚠ No changes to commit (working tree clean)"
         
         # Stage changes
-        if add_all:
-            repo.git.add(A=True)
-            staged_info = "All changes"
-        elif files:
-            repo.index.add(files)
-            staged_info = f"{len(files)} file(s)"
-        else:
-            return "✗ Error: No files specified and add_all is False"
+        try:
+            if add_all:
+                # Add all files including untracked
+                repo.git.add(A=True)
+                staged_info = "All changes"
+            elif files:
+                # Add specific files
+                repo.index.add(files)
+                staged_info = f"{len(files)} file(s): {', '.join(files[:3])}"
+                if len(files) > 3:
+                    staged_info += f" and {len(files) - 3} more"
+            else:
+                return "✗ Error: No files specified and add_all is False"
+        except GitCommandError as e:
+            return f"✗ Error staging files: {str(e)}"
+        
+        # Verify something is staged
+        if not repo.index.diff("HEAD") and not has_untracked:
+            return "⚠ No changes staged for commit"
         
         # Commit
-        commit = repo.index.commit(message)
+        try:
+            commit = repo.index.commit(message)
+        except GitCommandError as e:
+            return f"✗ Error creating commit: {str(e)}"
         
         # Get stats
-        stats = repo.git.diff('HEAD~1', '--shortstat')
+        try:
+            if len(list(repo.iter_commits())) > 1:
+                stats = repo.git.diff('HEAD~1', '--shortstat')
+            else:
+                # First commit, show file count
+                stats = f"{len(repo.tree().traverse())} file(s) in first commit"
+        except:
+            stats = "Statistics unavailable"
         
         output = "✓ Changes committed successfully\n"
         output += "═" * 70 + "\n"
@@ -557,12 +625,231 @@ def commit_changes(directory: str, message: str, add_all: bool = True,
         if stats:
             output += f"Stats: {stats}\n"
         
+        # Show current branch
+        try:
+            output += f"Branch: {repo.active_branch.name}\n"
+        except:
+            output += "Branch: (detached HEAD)\n"
+        
         return output
         
     except GitCommandError as e:
-        return f"✗ Git Error: {e.stderr}"
+        return f"✗ Git Command Error: {str(e)}"
     except Exception as e:
-        return f"✗ Error committing changes: {str(e)}"
+        return f"✗ Error committing changes: {str(e)}\n" \
+               f"Directory: {directory}"
+
+
+# Also update the deploy_to_github function with better error handling:
+@tool("Complete GitHub deployment")
+def deploy_to_github(directory: str, repo_name: str, description: str = "",
+                    commit_message: str = "Initial commit", private: bool = False,
+                    branch: str = "main", create_readme: bool = False,
+                    license_type: str = None) -> str:
+    """
+    Complete GitHub deployment workflow: init, gitignore, commit, create repo, and push.
+    
+    Performs these steps:
+    1. Initializes Git repository (if not already initialized)
+    2. Creates appropriate .gitignore file
+    3. Optionally creates README.md
+    4. Commits all changes
+    5. Creates GitHub repository
+    6. Adds remote and pushes code
+    7. Creates initial release tag
+    
+    Args:
+        directory: Project directory
+        repo_name: GitHub repository name
+        description: Repository description
+        commit_message: Initial commit message
+        private: Make repository private (default: False)
+        branch: Branch name (default: 'main')
+        create_readme: Create README.md if not exists (default: False)
+        license_type: License template (e.g., 'mit', 'apache-2.0')
+    
+    Returns:
+        Detailed deployment report or error message
+    """
+    try:
+        if not GITHUB_TOKEN or not GITHUB_USERNAME:
+            return "✗ Error: GitHub credentials not configured.\n" \
+                   "Set GITHUB_TOKEN and GITHUB_USERNAME in .env file."
+        
+        path = Path(directory)
+        if not path.exists():
+            return f"✗ Error: Directory does not exist: {directory}"
+        
+        results = []
+        
+        # Step 1: Initialize Git (if not already)
+        try:
+            repo = Repo(directory)
+            results.append("✓ Using existing Git repository")
+        except:
+            repo = Repo.init(directory)
+            # Set branch to main
+            try:
+                repo.git.branch('-M', branch)
+            except:
+                pass
+            results.append(f"✓ Git repository initialized (branch: {branch})")
+        
+        # Configure git user if not set (use GitHub credentials)
+        try:
+            repo.config_reader().get_value('user', 'name')
+        except:
+            try:
+                # Try to set from GitHub
+                g = Github(GITHUB_TOKEN)
+                user = g.get_user()
+                repo.config_writer().set_value('user', 'name', user.name or GITHUB_USERNAME).release()
+                repo.config_writer().set_value('user', 'email', user.email or f'{GITHUB_USERNAME}@users.noreply.github.com').release()
+                results.append("✓ Git user configured from GitHub")
+            except:
+                results.append("⚠ Git user not configured (may cause issues)")
+        
+        # Step 2: Detect project type and create .gitignore
+        project_type = detect_project_type(directory)
+        gitignore_path = path / '.gitignore'
+        
+        if not gitignore_path.exists():
+            gitignore_content = generate_gitignore(project_type)
+            gitignore_path.write_text(gitignore_content, encoding='utf-8')
+            results.append(f"✓ Created .gitignore ({project_type} template)")
+        else:
+            results.append("✓ Using existing .gitignore")
+        
+        # Step 3: Create README if requested
+        readme_path = path / 'README.md'
+        if create_readme and not readme_path.exists():
+            readme_content = f"# {repo_name}\n\n{description}\n\n## Installation\n\nTBD\n\n## Usage\n\nTBD\n"
+            readme_path.write_text(readme_content, encoding='utf-8')
+            results.append("✓ Created README.md")
+        
+        # Step 4: Commit all changes
+        try:
+            if repo.is_dirty(untracked_files=True) or len(repo.untracked_files) > 0:
+                repo.git.add(A=True)
+                commit = repo.index.commit(commit_message)
+                results.append(f"✓ Changes committed ({commit.hexsha[:8]}): {commit_message}")
+            else:
+                results.append("⚠ No changes to commit")
+        except GitCommandError as e:
+            results.append(f"⚠ Commit warning: {str(e)}")
+        
+        # Step 5: Create GitHub repository
+        g = Github(GITHUB_TOKEN)
+        user = g.get_user()
+        
+        try:
+            gh_repo = user.create_repo(
+                name=repo_name,
+                description=description,
+                private=private,
+                has_issues=True,
+                has_wiki=False,
+                has_projects=False,
+                auto_init=False,
+                license_template=license_type
+            )
+            results.append(f"✓ GitHub repository created")
+            repo_url = gh_repo.html_url
+        except GithubException as e:
+            if e.status == 422 and 'already exists' in str(e.data):
+                # Repository already exists, try to use it
+                gh_repo = user.get_repo(repo_name)
+                results.append(f"⚠ Using existing GitHub repository")
+                repo_url = gh_repo.html_url
+            else:
+                raise
+        
+        # Step 6: Add remote and push
+        remote_url = f"https://{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{repo_name}.git"
+        
+        # Add remote if doesn't exist
+        try:
+            if 'origin' not in [r.name for r in repo.remotes]:
+                repo.create_remote('origin', remote_url)
+                results.append("✓ Remote 'origin' added")
+            else:
+                # Update remote URL
+                repo.remote('origin').set_url(remote_url)
+                results.append("✓ Remote 'origin' updated")
+        except Exception as e:
+            results.append(f"⚠ Remote setup warning: {str(e)}")
+        
+        # Ensure we're on the correct branch
+        try:
+            if repo.active_branch.name != branch:
+                repo.git.checkout('-b', branch)
+        except:
+            pass
+        
+        # Push to GitHub
+        try:
+            origin = repo.remote('origin')
+            push_info = origin.push(refspec=f'{branch}:{branch}', set_upstream=True, force=True)
+            
+            # Check push result
+            has_error = False
+            for info in push_info:
+                if info.flags & info.ERROR:
+                    results.append(f"✗ Push error: {info.summary}")
+                    has_error = True
+                elif info.flags & info.REJECTED:
+                    results.append(f"⚠ Push rejected: {info.summary}")
+            
+            if not has_error:
+                results.append(f"✓ Code pushed to GitHub ({branch} branch)")
+        except GitCommandError as e:
+            results.append(f"⚠ Push warning: {str(e)}")
+        
+        # Step 7: Create initial tag
+        try:
+            tag_name = "v1.0.0"
+            if tag_name not in repo.tags:
+                repo.create_tag(tag_name, message="Initial release")
+                origin.push(tag_name)
+                results.append(f"✓ Created and pushed tag: {tag_name}")
+            else:
+                results.append("⚠ Tag v1.0.0 already exists")
+        except Exception as e:
+            results.append(f"⚠ Tag creation skipped: {str(e)}")
+        
+        # Generate final report
+        output = "GitHub Deployment Complete\n"
+        output += "═" * 70 + "\n\n"
+        output += "Deployment Steps:\n"
+        for i, result in enumerate(results, 1):
+            output += f"{i}. {result}\n"
+        
+        output += "\n" + "═" * 70 + "\n"
+        output += "Repository Information:\n"
+        output += f"  Name: {repo_name}\n"
+        output += f"  URL: {repo_url}\n"
+        output += f"  Clone (HTTPS): {gh_repo.clone_url}\n"
+        output += f"  Clone (SSH): {gh_repo.ssh_url}\n"
+        output += f"  Visibility: {'Private' if private else 'Public'}\n"
+        output += f"  Branch: {branch}\n"
+        output += f"  Project Type: {project_type}\n"
+        
+        output += "\n" + "═" * 70 + "\n"
+        output += "Next Steps:\n"
+        output += "  1. Visit repository: " + repo_url + "\n"
+        output += "  2. Configure repository settings (branch protection, etc.)\n"
+        output += "  3. Add collaborators if needed\n"
+        output += "  4. Set up GitHub Actions workflows\n"
+        output += "  5. Enable GitHub Pages (if applicable)\n"
+        
+        return output
+        
+    except GithubException as e:
+        return f"✗ GitHub API Error: {e.data.get('message', str(e))}"
+    except GitCommandError as e:
+        return f"✗ Git Command Error: {str(e)}"
+    except Exception as e:
+        return f"✗ Error in GitHub deployment: {str(e)}"
 
 
 @tool("Push to remote repository")
@@ -823,169 +1110,52 @@ def get_repo_status(directory: str, verbose: bool = True) -> str:
     except Exception as e:
         return f"✗ Error getting repository status: {str(e)}"
 
-
-@tool("Complete GitHub deployment")
-def deploy_to_github(directory: str, repo_name: str, description: str = "",
-                    commit_message: str = "Initial commit", private: bool = False,
-                    branch: str = "main", create_readme: bool = False,
-                    license_type: str = None) -> str:
+@tool("Clone GitHub repository")
+def clone_repository(repo_url: str, local_path: str, branch: str = "main") -> str:
     """
-    Complete GitHub deployment workflow: init, gitignore, commit, create repo, and push.
-    
-    Performs these steps:
-    1. Initializes Git repository (if not already initialized)
-    2. Creates appropriate .gitignore file
-    3. Optionally creates README.md
-    4. Commits all changes
-    5. Creates GitHub repository
-    6. Adds remote and pushes code
-    7. Creates initial release tag
+    Clones a GitHub repository to local directory.
     
     Args:
-        directory: Project directory
-        repo_name: GitHub repository name
-        description: Repository description
-        commit_message: Initial commit message
-        private: Make repository private (default: False)
-        branch: Branch name (default: 'main')
-        create_readme: Create README.md if not exists (default: False)
-        license_type: License template (e.g., 'mit', 'apache-2.0')
+        repo_url: Repository URL (HTTPS or SSH)
+        local_path: Local directory path to clone into
+        branch: Branch to checkout (default: 'main')
     
     Returns:
-        Detailed deployment report or error message
+        Success message or error message
     """
     try:
-        if not GITHUB_TOKEN or not GITHUB_USERNAME:
-            return "✗ Error: GitHub credentials not configured.\n" \
-                   "Set GITHUB_TOKEN and GITHUB_USERNAME in .env file."
+        local_path = Path(local_path)
         
-        path = Path(directory)
-        results = []
+        # Check if directory already exists
+        if local_path.exists():
+            # Check if it's already a git repo
+            try:
+                repo = Repo(local_path)
+                return f"⚠ Directory already exists and is a Git repository\n" \
+                       f"Path: {local_path}\n" \
+                       f"Current branch: {repo.active_branch.name}"
+            except:
+                return f"✗ Error: Directory already exists but is not a Git repository: {local_path}"
         
-        # Step 1: Initialize Git (if not already)
-        try:
-            repo = Repo(directory)
-            results.append("✓ Using existing Git repository")
-        except:
-            repo = Repo.init(directory, initial_branch=branch)
-            results.append(f"✓ Git repository initialized (branch: {branch})")
+        # Clone the repository
+        print(f"Cloning {repo_url} to {local_path}...")
+        repo = Repo.clone_from(repo_url, local_path, branch=branch)
         
-        # Step 2: Detect project type and create .gitignore
-        project_type = detect_project_type(directory)
-        gitignore_path = path / '.gitignore'
+        output = "✓ Repository cloned successfully\n"
+        output += "═" * 70 + "\n"
+        output += f"Repository URL: {repo_url}\n"
+        output += f"Local path: {local_path}\n"
+        output += f"Branch: {branch}\n"
+        output += f"Remote: {repo.remote().url}\n"
         
-        if not gitignore_path.exists():
-            gitignore_content = generate_gitignore(project_type)
-            gitignore_path.write_text(gitignore_content, encoding='utf-8')
-            results.append(f"✓ Created .gitignore ({project_type} template)")
-        else:
-            results.append("✓ Using existing .gitignore")
-        
-        # Step 3: Create README if requested
-        readme_path = path / 'README.md'
-        if create_readme and not readme_path.exists():
-            readme_content = f"# {repo_name}\n\n{description}\n\n## Installation\n\nTBD\n\n## Usage\n\nTBD\n"
-            readme_path.write_text(readme_content, encoding='utf-8')
-            results.append("✓ Created README.md")
-        
-        # Step 4: Commit all changes
-        if repo.is_dirty(untracked_files=True):
-            repo.git.add(A=True)
-            commit = repo.index.commit(commit_message)
-            results.append(f"✓ Changes committed ({commit.hexsha[:8]}): {commit_message}")
-        else:
-            results.append("⚠ No changes to commit")
-        
-        # Step 5: Create GitHub repository
-        g = Github(GITHUB_TOKEN)
-        user = g.get_user()
-        
-        try:
-            gh_repo = user.create_repo(
-                name=repo_name,
-                description=description,
-                private=private,
-                has_issues=True,
-                has_wiki=False,
-                has_projects=False,
-                auto_init=False,
-                license_template=license_type
-            )
-            results.append(f"✓ GitHub repository created")
-            repo_url = gh_repo.html_url
-        except GithubException as e:
-            if e.status == 422 and 'already exists' in str(e.data):
-                # Repository already exists, try to use it
-                gh_repo = user.get_repo(repo_name)
-                results.append(f"⚠ Using existing GitHub repository")
-                repo_url = gh_repo.html_url
-            else:
-                raise
-        
-        # Step 6: Add remote and push
-        remote_url = f"https://{GITHUB_TOKEN}@github.com/{GITHUB_USERNAME}/{repo_name}.git"
-        
-        # Add remote if doesn't exist
-        if 'origin' not in [r.name for r in repo.remotes]:
-            repo.create_remote('origin', remote_url)
-            results.append("✓ Remote 'origin' added")
-        else:
-            # Update remote URL
-            repo.remote('origin').set_url(remote_url)
-            results.append("✓ Remote 'origin' updated")
-        
-        # Push to GitHub
-        try:
-            origin = repo.remote('origin')
-            push_info = origin.push(refspec=f'{branch}:{branch}', set_upstream=True)
-            
-            # Check push result
-            if any(info.flags & info.ERROR for info in push_info):
-                results.append("✗ Push encountered errors")
-            else:
-                results.append(f"✓ Code pushed to GitHub ({branch} branch)")
-        except GitCommandError as e:
-            results.append(f"⚠ Push warning: {str(e)}")
-        
-        # Step 7: Create initial tag
-        try:
-            tag_name = "v1.0.0"
-            repo.create_tag(tag_name, message="Initial release")
-            origin.push(tag_name)
-            results.append(f"✓ Created and pushed tag: {tag_name}")
-        except:
-            results.append("⚠ Tag creation skipped (may already exist)")
-        
-        # Generate final report
-        output = "GitHub Deployment Complete\n"
-        output += "═" * 70 + "\n\n"
-        output += "Deployment Steps:\n"
-        for i, result in enumerate(results, 1):
-            output += f"{i}. {result}\n"
-        
-        output += "\n" + "═" * 70 + "\n"
-        output += "Repository Information:\n"
-        output += f"  Name: {repo_name}\n"
-        output += f"  URL: {repo_url}\n"
-        output += f"  Clone (HTTPS): {gh_repo.clone_url}\n"
-        output += f"  Clone (SSH): {gh_repo.ssh_url}\n"
-        output += f"  Visibility: {'Private' if private else 'Public'}\n"
-        output += f"  Branch: {branch}\n"
-        output += f"  Project Type: {project_type}\n"
-        
-        output += "\n" + "═" * 70 + "\n"
-        output += "Next Steps:\n"
-        output += "  1. Visit repository: " + repo_url + "\n"
-        output += "  2. Configure repository settings (branch protection, etc.)\n"
-        output += "  3. Add collaborators if needed\n"
-        output += "  4. Set up GitHub Actions workflows\n"
-        output += "  5. Enable GitHub Pages (if applicable)\n"
+        # List files
+        files = list(local_path.rglob("*"))
+        file_count = len([f for f in files if f.is_file()])
+        output += f"Files: {file_count}\n"
         
         return output
         
-    except GithubException as e:
-        return f"✗ GitHub API Error: {e.data.get('message', str(e))}"
     except GitCommandError as e:
-        return f"✗ Git Error: {e.stderr}"
+        return f"✗ Git Error: {str(e)}"
     except Exception as e:
-        return f"✗ Error in GitHub deployment: {str(e)}"
+        return f"✗ Error cloning repository: {str(e)}"

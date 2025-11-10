@@ -1,7 +1,7 @@
 from crewai import Task
 
 
-def create_planning_task(agent, project_description: str, project_type: str = "python"):
+def create_planning_task(agent, project_dir: str, project_description: str, project_type: str = "python"):
     return Task(
         description=f"""As the Senior Solution Architect, create a COMPREHENSIVE and DETAILED technical specification 
                         for the following project. Your specification must be complete enough that a developer can implement it WITHOUT 
@@ -10,7 +10,7 @@ def create_planning_task(agent, project_description: str, project_type: str = "p
                         ╔═══════════════════════════════════════════════════════════════╗
                         ║                    PROJECT REQUIREMENTS                        ║
                         ╚═══════════════════════════════════════════════════════════════╝
-
+                        PROJECT DIRECTORY: {project_dir} (Note: always follow this location)
                         PROJECT DESCRIPTION:
                         {project_description}
 

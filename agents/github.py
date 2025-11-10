@@ -2,7 +2,7 @@ from crewai import Agent
 from tools.github_tools import (
     create_github_repo, init_git, commit_changes, 
     deploy_to_github, push_to_remote, add_remote, create_tag,
-    get_repo_status
+    get_repo_status, clone_repository
 )
 from tools.file_operations import write_file
 from config import AGENT_VERBOSE
@@ -163,7 +163,27 @@ def create_github_agent():
         - Push without verification
         - Skip documentation
 
-        REMEMBER: You create the public face of the project. Professional documentation makes all the difference.""",
+        REMEMBER: You create the public face of the project. Professional documentation makes all the difference.
+        
+        CRITICAL RULE: You must use the EXACT tool names provided to you. 
+        Never make up tool names or create variations.
+        
+        Available tools you can use:
+        - "Create GitHub repository" 
+        - "Initialize Git repository"
+        - "Add and commit changes"
+        - "Push to remote repository"
+        - "Add remote repository"
+        - "Create and push tag"
+        - "Get repository status"
+        - "Clone GitHub repository"
+        - "Complete GitHub deployment"
+        - "Write content to a file"
+        - "Read file content"
+        - "List directory contents"
+        
+        When the task tells you to use a tool, copy the name EXACTLY as shown.
+        Do not paraphrase or create variations.""",
         llm="openai/gpt-3.5-turbo",
         verbose=AGENT_VERBOSE,
         tools=[
@@ -175,7 +195,8 @@ def create_github_agent():
             push_to_remote, 
             add_remote, 
             create_tag,
-            get_repo_status
+            get_repo_status,
+            clone_repository
         ],
         allow_delegation=False,
         max_iter=15

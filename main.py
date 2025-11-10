@@ -12,7 +12,7 @@ from agents.github import create_github_agent
 from tasks.manager_tasks import create_planning_task
 from tasks.developer_tasks import create_development_task
 from tasks.tester_tasks import create_testing_task
-from tasks.github_tasks import create_github_task
+from tasks.github_tasks import create_github_deployment_task, create_github_repository_task
 
 # Import config
 from config import OUTPUT_DIR, GITHUB_USERNAME
@@ -134,8 +134,8 @@ def main():
     print(f"\n✓ Repository name will be: {repo_name}")
     
     # Create project directory
-    project_dir = create_project_directory(project_name)
-    print(f"✓ Project directory: {project_dir}")
+    project_dir = OUTPUT_DIR / f"{repo_name}"
+    print(f"✓ Project will be cloned to: {project_dir}")
     
     print("\n" + "=" * 80)
     print("🚀 STARTING PROJECT GENERATION")
@@ -147,6 +147,39 @@ def main():
     developer = create_developer_agent()
     tester = create_tester_agent()
     github_manager = create_github_agent()
+
+    print("\n" + "=" * 80)
+    print("🔧 PHASE 0: GITHUB REPOSITORY CREATION")
+    print("=" * 80)
+    
+    try:
+        print("\n📦 Creating GitHub repository...")
+        
+        repo_creation_task = create_github_repository_task(
+            github_manager,
+            repo_name,
+            project_description,
+            github_username,
+            str(project_dir),
+            visibility="public",
+            license_type="MIT"
+        )
+        
+        repo_creation_crew = Crew(
+            agents=[github_manager],
+            tasks=[repo_creation_task],
+            process=Process.sequential,
+            verbose=True
+        )
+        
+        repo_result = repo_creation_crew.kickoff()
+        print("\n✅ GitHub repository created and ready!")
+        print(f"📍 Repository will be at: https://github.com/{github_username}/{repo_name}")
+        
+    except Exception as e:
+        print(f"\n❌ Error creating repository: {str(e)}")
+        print("Project generation cannot continue without repository.")
+        return
     
     # PHASE 1: PLANNING WITH HUMAN APPROVAL LOOP
     print("\n" + "=" * 80)
@@ -165,6 +198,7 @@ def main():
         # Create planning task
         planning_task = create_planning_task(
             manager, 
+            str(project_dir),
             current_description, 
             project_type
         )
@@ -296,12 +330,11 @@ Please update the technical plan to incorporate these new requirements."""
     print("=" * 80)
     
     try:
-        github_task = create_github_task(
-            github_manager,
-            str(project_dir),
-            github_username,
-            repo_name,
-            project_description,
+        github_task = create_github_deployment_task(
+            agent=github_manager,
+            project_dir=str(project_dir),
+            repo_name=repo_name,
+            github_username=github_username,
             context_tasks=[planning_task, development_task, testing_task]
         )
         
