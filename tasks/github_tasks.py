@@ -138,197 +138,161 @@ def create_github_deployment_task(
     """Task to commit and push code to the already-cloned repository."""
     
     return Task(
-        description=f"""Commit and push all developed and tested code to GitHub.
+        description=f"""Commit and push all code to GitHub. Follow these EXACT steps in order.
 
 PROJECT DIRECTORY: {project_dir}
 REPOSITORY: https://github.com/{github_username}/{repo_name}
 
 ═══════════════════════════════════════════════════════════════════════════════
-⚠️ CRITICAL: USE EXACT TOOL NAMES - DO NOT MAKE UP TOOL NAMES
+⚠️ EXECUTE THESE STEPS IN EXACT ORDER - DO NOT SKIP OR REPEAT
 ═══════════════════════════════════════════════════════════════════════════════
 
-You MUST use these EXACT tool names (copy-paste them):
-1. "Get repository status"
-2. "List directory contents"
-3. "Read file content"
-4. "Write content to a file"
-5. "Add and commit changes"
-6. "Push to remote repository"
-7. "Create and push tag"
-
-DO NOT create variations like:
-❌ "Initialize the Git repository for committing changes"
-❌ "Commit the changes"
-❌ "Push code to GitHub"
-
-Use ONLY the exact names listed above!
-
-═══════════════════════════════════════════════════════════════════════════════
-IMPORTANT CONTEXT:
-═══════════════════════════════════════════════════════════════════════════════
-
-The repository has already been:
-✅ Created on GitHub
-✅ Cloned to {project_dir}
-✅ Set up with git remote
-
-Your job is to:
-1. Verify all files from development and testing
-2. Create/update documentation files
-3. Commit everything
-4. Push to GitHub
-
-═══════════════════════════════════════════════════════════════════════════════
-DEPLOYMENT WORKFLOW:
-═══════════════════════════════════════════════════════════════════════════════
-
-📋 PHASE 1: PRE-COMMIT VERIFICATION
+STEP 1: Check Repository Status (DO THIS ONCE ONLY)
 ───────────────────────────────────────────────────────────────────────────────
+Tool Name: "Get repository status"
+Arguments:
+{{
+  "directory": "{project_dir}",
+  "verbose": true
+}}
 
-1. Verify git repository status:
-   □ Use get_repo_status tool
-   □ Confirm we're in a git repository
-   □ Confirm remote 'origin' exists
-   □ Note current branch (should be 'main')
+After executing: Read the output and move to STEP 2. DO NOT run this tool again.
 
-2. Check all required files exist:
-   □ Use list_directory tool
-   □ Verify: Source code, tests, documentation
-   □ Check for .gitignore (should exist from developer)
-   □ Check for README.md
-   □ Verify no sensitive data (.env with secrets, API keys)
-
-3. Enhance/Create documentation:
-   □ Update README.md if needed (make it comprehensive)
-   □ Create CHANGELOG.md with v1.0.0 entry
-   □ Verify LICENSE file exists
-   □ Add any missing documentation
-
-📦 PHASE 2: COMMIT ALL CHANGES
+STEP 2: List All Files (DO THIS ONCE ONLY)
 ───────────────────────────────────────────────────────────────────────────────
+Tool Name: "List directory contents"
+Arguments:
+{{
+  "directory": "{project_dir}",
+  "recursive": true
+}}
 
-1. Stage all files:
-   □ Use commit_changes tool with add_all=True
-   □ This will stage all new and modified files
-   □ .gitignore will prevent unwanted files
+After executing: Verify files exist and move to STEP 3. DO NOT run this tool again.
 
-2. Create commit:
-   □ Commit message: "Complete project implementation with tests and documentation"
-   □ Include bullet points about what's included
-   □ Use commit_changes tool
-
-3. Verify commit:
-   □ Use get_repo_status tool
-   □ Confirm commit was created
-   □ Confirm working tree is clean
-
-🚀 PHASE 3: PUSH TO GITHUB
+STEP 3: Create CHANGELOG.md (DO THIS ONCE ONLY)
 ───────────────────────────────────────────────────────────────────────────────
+Tool Name: "Write content to a file"
+Arguments:
+{{
+  "file_path": "{project_dir}/CHANGELOG.md",
+  "content": "# Changelog\\n\\n## [1.0.0] - Initial Release\\n\\n### Added\\n- Complete project implementation\\n- Comprehensive tests\\n- Full documentation\\n",
+  "mode": "w"
+}}
 
-1. Push code:
-   □ Use push_to_remote tool
-   □ Remote: origin
-   □ Branch: main
-   □ This pushes to: https://github.com/{github_username}/{repo_name}
+After executing: File created. Move to STEP 4. DO NOT run this tool again.
 
-2. Create version tag:
-   □ Use create_tag tool
-   □ Tag: v1.0.0
-   □ Message: "Initial release - fully functional project"
-   □ Push tag: YES
-
-✅ PHASE 4: VERIFICATION
+STEP 4: Commit ALL Changes (DO THIS ONCE ONLY)
 ───────────────────────────────────────────────────────────────────────────────
+Tool Name: "Add and commit changes"
+Arguments:
+{{
+  "directory": "{project_dir}",
+  "message": "Complete project implementation with tests and documentation",
+  "add_all": true
+}}
 
-1. Final checks:
-   □ Use get_repo_status tool
-   □ Confirm working tree is clean
-   □ Confirm all commits pushed
-   □ Confirm no uncommitted changes
+After executing: Changes committed. Move to STEP 5. DO NOT run this tool again.
 
-2. Create deployment report:
-   □ Use write_file tool
-   □ File: {project_dir}/DEPLOYMENT_REPORT.md
-   □ Include: All deployment details, URLs, file counts, git operations
+STEP 5: Push to GitHub (DO THIS ONCE ONLY)
+───────────────────────────────────────────────────────────────────────────────
+Tool Name: "Push to remote repository"
+Arguments:
+{{
+  "directory": "{project_dir}",
+  "remote": "origin",
+  "branch": "main",
+  "force": false,
+  "set_upstream": true
+}}
+
+After executing: Code pushed to GitHub. Move to STEP 6. DO NOT run this tool again.
+
+STEP 6: Create Version Tag (DO THIS ONCE ONLY)
+───────────────────────────────────────────────────────────────────────────────
+Tool Name: "Create and push tag"
+Arguments:
+{{
+  "directory": "{project_dir}",
+  "tag_name": "v1.0.0",
+  "message": "Initial release - fully functional project",
+  "push": true,
+  "remote": "origin"
+}}
+
+After executing: Tag created and pushed. Move to STEP 7. DO NOT run this tool again.
+
+STEP 7: Final Verification (DO THIS ONCE ONLY)
+───────────────────────────────────────────────────────────────────────────────
+Tool Name: "Get repository status"
+Arguments:
+{{
+  "directory": "{project_dir}",
+  "verbose": true
+}}
+
+After executing: Verify working tree is clean. Move to STEP 8. DO NOT run this tool again.
+
+STEP 8: Create Deployment Report (DO THIS ONCE ONLY - FINAL STEP)
+───────────────────────────────────────────────────────────────────────────────
+Tool Name: "Write content to a file"
+Arguments:
+{{
+  "file_path": "{project_dir}/DEPLOYMENT_REPORT.md",
+  "content": "# Deployment Report\\n\\n## Status\\n✅ SUCCESSFUL\\n\\n## Repository\\nhttps://github.com/{github_username}/{repo_name}\\n\\n## Summary\\n- All files committed\\n- Pushed to main branch\\n- Tag v1.0.0 created\\n- Deployment complete\\n",
+  "mode": "w"
+}}
+
+After executing: Report created. YOU ARE DONE. STOP HERE.
 
 ═══════════════════════════════════════════════════════════════════════════════
-TOOLS TO USE (IN ORDER):
+⚠️ CRITICAL RULES:
 ═══════════════════════════════════════════════════════════════════════════════
 
-1. get_repo_status - Check current git status
-2. list_directory - Verify all files
-3. read_file - Check existing documentation
-4. write_file - Create/update docs and DEPLOYMENT_REPORT.md
-5. commit_changes - Commit all changes (add_all=True)
-6. push_to_remote - Push to origin/main
-7. create_tag - Create and push v1.0.0 tag
-8. get_repo_status - Final verification
+1. Execute steps 1-8 in EXACT order
+2. Do each step ONLY ONCE
+3. Do NOT repeat "Get repository status" multiple times
+4. Do NOT go back to previous steps
+5. After step 8, you are DONE - provide your final answer
+
+If a tool fails:
+- Read the error message
+- Fix the arguments for THAT tool only
+- Try that ONE tool again
+- Then continue to the next step
+
+DO NOT:
+❌ Run "Get repository status" more than twice (steps 1 and 7 only)
+❌ Skip steps
+❌ Repeat steps unnecessarily
+❌ Get stuck in a loop
 
 ═══════════════════════════════════════════════════════════════════════════════
-CRITICAL REQUIREMENTS:
+PROGRESS TRACKING:
 ═══════════════════════════════════════════════════════════════════════════════
 
-YOU MUST:
-✅ Verify .gitignore exists and works
-✅ Check NO sensitive data in files (.env, secrets, keys)
-✅ Commit ALL source code, tests, docs
-✅ Push to existing remote (already configured)
-✅ Create v1.0.0 tag
-✅ Create DEPLOYMENT_REPORT.md
-✅ Verify push succeeded
+After each step, say: "✅ Completed Step X, moving to Step Y"
 
-YOU MUST NEVER:
-❌ Commit .env files with real secrets
-❌ Commit node_modules/, __pycache__/, build/
-❌ Force push (--force) without good reason
-❌ Skip verification steps
+This helps you track progress and prevents loops.
 
 ═══════════════════════════════════════════════════════════════════════════════
-SUCCESS CRITERIA:
-═══════════════════════════════════════════════════════════════════════════════
-
-Deployment succeeds when:
-✅ All code committed to git
-✅ All changes pushed to GitHub
-✅ Tag v1.0.0 exists on GitHub
-✅ Repository accessible: https://github.com/{github_username}/{repo_name}
-✅ README displays correctly on GitHub
-✅ No sensitive data exposed
-✅ DEPLOYMENT_REPORT.md created
-✅ Working tree clean
-
-═══════════════════════════════════════════════════════════════════════════════
-BEGIN DEPLOYMENT!
+BEGIN WITH STEP 1 NOW!
 ═══════════════════════════════════════════════════════════════════════════════
 """,
         
         agent=agent,
         context=context_tasks,
-        expected_output="""Deployment completion report:
+        expected_output=f"""Deployment completion report with steps executed:
 
-1. ✅ Pre-Deployment Verification
-   - Git repository status: Clean
-   - All source files present
-   - Documentation complete
-   - No sensitive data found
+✅ Step 1: Get repository status - Verified git setup
+✅ Step 2: List directory contents - Confirmed all files present
+✅ Step 3: Write CHANGELOG.md - Created changelog
+✅ Step 4: Add and commit changes - All files committed
+✅ Step 5: Push to remote repository - Pushed to GitHub
+✅ Step 6: Create and push tag - Tag v1.0.0 created
+✅ Step 7: Get repository status - Final verification complete
+✅ Step 8: Write DEPLOYMENT_REPORT.md - Report created
 
-2. ✅ Git Operations
-   - All files staged
-   - Commit created: [hash]
-   - Pushed to: origin/main
-   - Tag v1.0.0 created and pushed
-
-3. ✅ Deployment Verification
-   - Working tree: Clean
-   - All changes on GitHub
-   - Repository URL: https://github.com/{github_username}/{repo_name}
-   - Tag visible on GitHub
-
-4. ✅ Documentation
-   - DEPLOYMENT_REPORT.md created
-   - Complete deployment details recorded
-
-**Status**: ✅ DEPLOYMENT SUCCESSFUL  
-**Repository**: https://github.com/{github_username}/{repo_name}  
-**Ready for**: Production use"""
+**Repository**: https://github.com/{github_username}/{repo_name}
+**Status**: ✅ DEPLOYMENT SUCCESSFUL
+**All 8 steps completed successfully**"""
     )
