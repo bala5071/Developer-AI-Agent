@@ -55,20 +55,6 @@ STEP 2: CLONE REPOSITORY LOCALLY
 □ Verify clone was successful
 □ Confirm local directory exists with README.md
 
-STEP 3: VERIFY SETUP
-───────────────────────────────────────────────────────────────────────────────
-□ Confirm repository exists on GitHub
-□ Confirm local directory has .git folder
-□ Confirm README.md exists locally
-□ Confirm git remote is configured correctly
-
-STEP 4: PREPARE FOR DEVELOPMENT
-───────────────────────────────────────────────────────────────────────────────
-□ Use get_repo_status tool to verify git status
-□ Ensure working tree is clean
-□ Verify remote tracking is set up
-□ Repository is ready for team to start working
-
 ═══════════════════════════════════════════════════════════════════════════════
 TOOLS TO USE (IN ORDER):
 ═══════════════════════════════════════════════════════════════════════════════

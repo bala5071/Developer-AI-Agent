@@ -184,7 +184,7 @@ def create_github_agent():
         
         When the task tells you to use a tool, copy the name EXACTLY as shown.
         Do not paraphrase or create variations.""",
-        llm="openai/gpt-3.5-turbo",
+        llm="openai/gpt-5-mini",
         verbose=AGENT_VERBOSE,
         tools=[
             create_github_repo,

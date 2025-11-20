@@ -10,7 +10,7 @@ LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
 
 # OpenAI Configuration
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini")
 # Ollama Configuration
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "codellama:13b-instruct")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
