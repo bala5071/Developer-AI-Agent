@@ -1,0 +1,8 @@
+/* styles.css - Styles for simple_website */
+
+.green-text {
+    color: green;
+    font-size: 24px;
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}

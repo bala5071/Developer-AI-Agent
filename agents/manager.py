@@ -146,7 +146,7 @@ def create_manager_agent():
         REMEMBER: Your plan should be so detailed that a competent developer who has never seen 
         the project can implement it exactly as specified without asking questions.""",
         
-        llm="openai/gpt-3.5-turbo",
+        llm="openai/gpt-5-mini",
         verbose=AGENT_VERBOSE,
         allow_delegation=False,
         max_iter=20

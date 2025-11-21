@@ -19,7 +19,7 @@ LANGUAGE_CONFIG = {
         'type_check': lambda: ['mypy', '.']
     },
     'javascript': {
-        'extensions': ['.js', '.mjs'],
+        'extensions': ['.js', '.mjs', '.cjs'],
         'run_command': lambda file: ['node', file],
         'syntax_check': lambda file: ['node', '--check', file],
         'dependency_install': lambda file: ['npm', 'install'],
@@ -37,6 +37,39 @@ LANGUAGE_CONFIG = {
         'format_command': lambda files: ['prettier', '--write'] + files,
         'lint_command': lambda files: ['eslint'] + files,
         'type_check': lambda: ['tsc', '--noEmit'],
+        'build_command': lambda: ['npm', 'run', 'build']
+    },
+    'html': {
+        'extensions': ['.html', '.htm'],
+        'run_command': lambda file: ['open', file] if sys.platform == 'darwin' else ['xdg-open', file] if sys.platform == 'linux' else ['start', file],
+        'syntax_check': lambda file: ['html5validator', file],
+        'format_command': lambda files: ['prettier', '--write'] + files,
+        'lint_command': lambda files: ['htmlhint'] + files,
+        'build_command': lambda: ['npm', 'run', 'build'] if Path('package.json').exists() else None
+    },
+    'css': {
+        'extensions': ['.css', '.scss', '.sass', '.less'],
+        'syntax_check': lambda file: ['stylelint', file],
+        'format_command': lambda files: ['prettier', '--write'] + files,
+        'lint_command': lambda files: ['stylelint'] + files,
+        'build_command': lambda: ['sass', 'styles.scss', 'styles.css'] if Path('styles.scss').exists() else None
+    },
+    'jsx': {
+        'extensions': ['.jsx'],
+        'run_command': lambda file: ['node', file],
+        'syntax_check': lambda file: ['node', '--check', file],
+        'dependency_install': lambda file: ['npm', 'install'],
+        'test_command': lambda: ['npm', 'test'],
+        'format_command': lambda files: ['prettier', '--write'] + files,
+        'lint_command': lambda files: ['eslint'] + files,
+        'build_command': lambda: ['npm', 'run', 'build']
+    },
+    'vue': {
+        'extensions': ['.vue'],
+        'dependency_install': lambda file: ['npm', 'install'],
+        'test_command': lambda: ['npm', 'test'],
+        'format_command': lambda files: ['prettier', '--write'] + files,
+        'lint_command': lambda files: ['eslint'] + files,
         'build_command': lambda: ['npm', 'run', 'build']
     },
     'java': {
@@ -109,11 +142,111 @@ LANGUAGE_CONFIG = {
     },
     'kotlin': {
         'extensions': ['.kt', '.kts'],
-        'run_command': lambda file: ['kotlinc', file, '-include-runtime', '-d', 'output.jar', '&&', 'java', '-jar', 'output.jar'],
+        'run_command': lambda file: ['kotlinc', file, '-include-runtime', '-d', 'output.jar'],
         'syntax_check': lambda file: ['kotlinc', file],
         'dependency_install': lambda file: ['gradle', 'build'],
         'test_command': lambda: ['gradle', 'test'],
         'build_command': lambda: ['gradle', 'build']
+    },
+    'c': {
+        'extensions': ['.c', '.h'],
+        'run_command': lambda file: ['gcc', file, '-o', 'output', '&&', './output'],
+        'syntax_check': lambda file: ['gcc', '-fsyntax-only', file],
+        'format_command': lambda files: ['clang-format', '-i'] + files,
+        'lint_command': lambda files: ['clang-tidy'] + files,
+        'build_command': lambda: ['make'] if Path('Makefile').exists() else ['cmake', '--build', '.']
+    },
+    'cpp': {
+        'extensions': ['.cpp', '.cc', '.cxx', '.hpp', '.hh', '.hxx'],
+        'run_command': lambda file: ['g++', file, '-o', 'output', '&&', './output'],
+        'syntax_check': lambda file: ['g++', '-fsyntax-only', file],
+        'format_command': lambda files: ['clang-format', '-i'] + files,
+        'lint_command': lambda files: ['clang-tidy'] + files,
+        'build_command': lambda: ['make'] if Path('Makefile').exists() else ['cmake', '--build', '.']
+    },
+    'r': {
+        'extensions': ['.r', '.R'],
+        'run_command': lambda file: ['Rscript', file],
+        'syntax_check': lambda file: ['Rscript', '-e', f'source("{file}")'],
+        'dependency_install': lambda file: ['Rscript', '-e', 'install.packages()'],
+        'test_command': lambda: ['Rscript', '-e', 'testthat::test_dir("tests")']
+    },
+    'scala': {
+        'extensions': ['.scala'],
+        'run_command': lambda file: ['scala', file],
+        'syntax_check': lambda file: ['scalac', file],
+        'dependency_install': lambda file: ['sbt', 'update'],
+        'test_command': lambda: ['sbt', 'test'],
+        'build_command': lambda: ['sbt', 'compile']
+    },
+    'dart': {
+        'extensions': ['.dart'],
+        'run_command': lambda file: ['dart', 'run', file],
+        'syntax_check': lambda file: ['dart', 'analyze', file],
+        'dependency_install': lambda file: ['dart', 'pub', 'get'],
+        'test_command': lambda: ['dart', 'test'],
+        'format_command': lambda files: ['dart', 'format'] + files,
+        'build_command': lambda: ['dart', 'compile', 'exe', 'bin/main.dart']
+    },
+    'shell': {
+        'extensions': ['.sh', '.bash', '.zsh'],
+        'run_command': lambda file: ['bash', file],
+        'syntax_check': lambda file: ['bash', '-n', file],
+        'lint_command': lambda files: ['shellcheck'] + files
+    },
+    'sql': {
+        'extensions': ['.sql'],
+        'syntax_check': lambda file: ['sqlfluff', 'lint', file],
+        'format_command': lambda files: ['sqlfluff', 'fix'] + files,
+        'lint_command': lambda files: ['sqlfluff', 'lint'] + files
+    },
+    'json': {
+        'extensions': ['.json'],
+        'syntax_check': lambda file: ['python', '-m', 'json.tool', file],
+        'format_command': lambda files: ['prettier', '--write'] + files
+    },
+    'yaml': {
+        'extensions': ['.yaml', '.yml'],
+        'syntax_check': lambda file: ['yamllint', file],
+        'format_command': lambda files: ['prettier', '--write'] + files,
+        'lint_command': lambda files: ['yamllint'] + files
+    },
+    'xml': {
+        'extensions': ['.xml'],
+        'syntax_check': lambda file: ['xmllint', '--noout', file],
+        'format_command': lambda files: ['xmllint', '--format'] + files
+    },
+    'markdown': {
+        'extensions': ['.md', '.markdown'],
+        'format_command': lambda files: ['prettier', '--write'] + files,
+        'lint_command': lambda files: ['markdownlint'] + files
+    },
+    'lua': {
+        'extensions': ['.lua'],
+        'run_command': lambda file: ['lua', file],
+        'syntax_check': lambda file: ['luac', '-p', file],
+        'lint_command': lambda files: ['luacheck'] + files
+    },
+    'perl': {
+        'extensions': ['.pl', '.pm'],
+        'run_command': lambda file: ['perl', file],
+        'syntax_check': lambda file: ['perl', '-c', file],
+        'lint_command': lambda files: ['perlcritic'] + files
+    },
+    'haskell': {
+        'extensions': ['.hs'],
+        'run_command': lambda file: ['runhaskell', file],
+        'syntax_check': lambda file: ['ghc', '-fno-code', file],
+        'test_command': lambda: ['stack', 'test'],
+        'build_command': lambda: ['stack', 'build']
+    },
+    'elixir': {
+        'extensions': ['.ex', '.exs'],
+        'run_command': lambda file: ['elixir', file],
+        'syntax_check': lambda file: ['elixir', '-c', file],
+        'dependency_install': lambda file: ['mix', 'deps.get'],
+        'test_command': lambda: ['mix', 'test'],
+        'format_command': lambda files: ['mix', 'format'] + files
     }
 }
 

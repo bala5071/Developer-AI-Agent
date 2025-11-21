@@ -8,6 +8,25 @@ def create_development_task(agent, project_dir: str, project_type: str, context_
                     PROJECT TYPE: {project_type}
 
                     ═══════════════════════════════════════════════════════════════════════════════
+                    🎯 CRITICAL: FILE LOCATION
+                    ═══════════════════════════════════════════════════════════════════════════════
+
+                    ALL FILES MUST BE CREATED IN THIS EXACT DIRECTORY:
+                    {project_dir}
+
+                    DO NOT create files anywhere else!
+                    DO NOT use relative paths!
+                    DO NOT create a subdirectory with the project name!
+
+                    When using "Write content to a file" tool, ALWAYS use full paths like:
+                    - {project_dir}/main.py
+                    - {project_dir}/README.md
+                    - {project_dir}/tests/test_main.py
+                    - {project_dir}/.gitignore
+
+                    based on the project directory given implement the project as the directory has been already created.
+
+                    ═══════════════════════════════════════════════════════════════════════════════
                     YOUR IMPLEMENTATION RESPONSIBILITIES:
                     ═══════════════════════════════════════════════════════════════════════════════
 

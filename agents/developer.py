@@ -15,6 +15,7 @@ def create_developer_agent():
         
         goal="""Write clean, efficient, and maintainable code based on detailed technical specifications.""",
         backstory=dev_backstory,
+        llm="openai/gpt-5-mini",
         verbose=AGENT_VERBOSE,
         tools=[
             write_file, read_file, create_directory, list_directory,
