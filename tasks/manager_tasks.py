@@ -335,3 +335,177 @@ def create_planning_task(agent, project_dir: str, project_description: str, proj
                             The specification must be detailed enough that any competent developer can implement 
                             the project exactly as specified without requiring clarification."""
     )
+
+
+def create_improvement_planning_task_inline(manager, project_dir: str, project_type: str,
+                                           user_feedback: str, iteration: int,
+                                           context_tasks: list) -> Task:
+    """
+    Create improvement planning task inline without modifying other files.
+    """
+    return Task(
+        description=f"""Analyze user feedback and create a detailed improvement plan for the development team.
+
+PROJECT CONTEXT:
+- Directory: {project_dir}
+- Type: {project_type}
+- Feedback Iteration: {iteration}
+
+USER FEEDBACK RECEIVED:
+═══════════════════════════════════════════════════════════════════════════════
+{user_feedback}
+═══════════════════════════════════════════════════════════════════════════════
+
+YOUR ROLE AS TECHNICAL MANAGER:
+═══════════════════════════════════════════════════════════════════════════════
+You must analyze the user's feedback and create a concrete, actionable improvement 
+plan that the Developer and Tester agents will follow.
+
+STEP 1: UNDERSTAND CURRENT STATE
+───────────────────────────────────────────────────────────────────────────────
+1. Review the existing project by reading key files:
+   - README.md - What does the project do?
+   - Source code files - What's implemented?
+   - TEST_REPORT.md - What's the current quality?
+   - TECHNICAL_PLAN.md - What was the original plan?
+
+2. Understand the project structure and current capabilities
+
+STEP 2: ANALYZE USER FEEDBACK
+───────────────────────────────────────────────────────────────────────────────
+Categorize the feedback into:
+- 🐛 **Bug Fixes** - Issues that need fixing
+- ✨ **New Features** - Functionality to add
+- 🔧 **Improvements** - Enhancements to existing code
+- 📝 **Documentation** - Updates to docs/README
+- 🧪 **Tests** - Additional testing needed
+
+STEP 3: CREATE DETAILED IMPROVEMENT PLAN
+───────────────────────────────────────────────────────────────────────────────
+For EACH requested change, provide:
+
+### Change #N: [Brief Title]
+
+**Type**: Bug Fix / New Feature / Improvement / Documentation / Test
+
+**User Request**: 
+[Quote exactly what user asked for]
+
+**Implementation Steps for Developer**:
+1. File: `exact/path/to/file.py`
+   - Action: [Very specific action - add function, modify class, etc.]
+   - Location: [Exact location - after line X, in function Y, etc.]
+   - Code details: [What code to add/modify]
+
+2. File: `another/file.py`
+   - Action: [Specific action]
+   - Details: [Exact changes needed]
+
+**Testing Requirements for Tester**:
+- Add test: `test_name()` in `tests/test_file.py`
+- Test scenario: [What to test]
+- Expected result: [What should happen]
+
+**Acceptance Criteria**:
+- [ ] Specific measurable criterion
+- [ ] Another criterion
+- [ ] Final criterion
+
+---
+
+STEP 4: PROVIDE IMPLEMENTATION GUIDANCE
+───────────────────────────────────────────────────────────────────────────────
+Include:
+
+**Files to Modify**:
+- `file1.py` - Add X function, modify Y class
+- `file2.py` - Update Z method
+- `README.md` - Add documentation for new features
+
+**Files to Create** (if needed):
+- `new_file.py` - Purpose and contents
+
+**Implementation Order**:
+1. First: [Changes that should go first and why]
+2. Then: [Next set of changes and why]
+3. Finally: [Last changes and why]
+
+**Important Notes**:
+- Any dependencies to install
+- Breaking changes to watch for
+- Integration considerations
+
+CRITICAL REQUIREMENTS:
+═══════════════════════════════════════════════════════════════════════════════
+1. ✅ Be EXTREMELY specific - exact file paths, function names, line locations
+2. ✅ Address EVERY point in the user feedback
+3. ✅ Provide clear acceptance criteria
+4. ✅ Include testing requirements
+5. ✅ Think through implementation order
+6. ✅ Consider impact on existing code
+
+GOOD vs BAD EXAMPLES:
+═══════════════════════════════════════════════════════════════════════════════
+
+❌ BAD: "Add delete functionality"
+✅ GOOD: "In src/task_manager.py, add method delete_task(task_id: int) after 
+         line 45 that removes task from self.tasks dictionary and returns True 
+         if found, False otherwise"
+
+❌ BAD: "Make it colorful"
+✅ GOOD: "In requirements.txt add 'colorama>=0.4.6', then in src/cli.py import 
+         colorama at line 3, wrap success messages with Fore.GREEN, error 
+         messages with Fore.RED"
+
+❌ BAD: "Fix the bug"
+✅ GOOD: "In src/processor.py line 67, add check 'if not data:' before the 
+         loop to handle empty list case and return early with message"
+
+FORMAT YOUR RESPONSE AS:
+═══════════════════════════════════════════════════════════════════════════════
+
+# Improvement Plan - Iteration {iteration}
+
+## Executive Summary
+[2-3 sentences about what will be changed]
+
+## Changes Requested
+1. [Change 1]
+2. [Change 2]
+3. [Change 3]
+
+## Detailed Implementation Plan
+
+[For each change, provide the structure described above]
+
+## Files to Change
+- File 1: What changes
+- File 2: What changes
+
+## Implementation Order
+1. Phase 1: [What and why]
+2. Phase 2: [What and why]
+3. Phase 3: [What and why]
+
+## Success Criteria
+- [ ] All requested changes implemented
+- [ ] Tests pass
+- [ ] Documentation updated
+
+Begin creating the improvement plan now!
+═══════════════════════════════════════════════════════════════════════════════
+""",
+        agent=manager,
+        context=context_tasks,
+        expected_output=f"""A detailed improvement plan containing:
+
+1. Executive summary of changes
+2. Categorized list of requested changes
+3. Specific implementation steps for each change with exact file paths and locations
+4. Clear testing requirements
+5. File modification manifest
+6. Implementation order with reasoning
+7. Success criteria
+
+The plan must be actionable enough that Developer can implement without ambiguity."""
+    )
