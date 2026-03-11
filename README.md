@@ -1,7 +1,7 @@
 # Developer AI Agent 🤖💻
 
 ## 📖 Overview
-Developer AI Agent is a multi-agent system built to automate the software development lifecycle. By orchestrating specialized AI agents—an Architect, a Developer, and a Tester—it translates natural language ideas into fully tested, executable code. 
+Developer AI Agent is a multi-agent system built to automate the software development lifecycle. By orchestrating specialized AI agents—an Architect, a Developer, a Tester, and a GitHub—it translates natural language ideas into fully tested, executable code. 
 
 Built with **Python**, **OpenAI API**, and **CrewAI**, this project goes beyond simple prompt wrapping by implementing **iterative feedback loops** and **function calling**. If the Tester agent identifies a bug, the code is autonomously routed back to the Developer for refinement before the final output is presented, ensuring reliability and an autonomous development process.
 
